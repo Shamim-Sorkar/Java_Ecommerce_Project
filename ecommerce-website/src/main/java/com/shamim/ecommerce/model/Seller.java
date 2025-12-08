@@ -20,6 +20,7 @@ public class Seller {
     private String sellerName;
     private String mobile;
 
+
     @Column(unique = true, nullable = false)
     private String email;
 
@@ -33,6 +34,8 @@ public class Seller {
 
     @OneToOne(cascade = CascadeType.ALL)
     private Address pickupAddress = new Address();
+
+    private String GSTIN;
 
     private UserRole role = UserRole.ROLE_SELLER;
 

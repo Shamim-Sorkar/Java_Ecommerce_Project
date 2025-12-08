@@ -2,26 +2,33 @@ package com.shamim.ecommerce.service.impl;
 
 import com.shamim.ecommerce.config.JwtProvider;
 import com.shamim.ecommerce.constant.UserRole;
+import com.shamim.ecommerce.dto.request.LoginRequest;
 import com.shamim.ecommerce.dto.request.SignupRequest;
+import com.shamim.ecommerce.dto.response.AuthResponse;
 import com.shamim.ecommerce.model.Cart;
+import com.shamim.ecommerce.model.Seller;
 import com.shamim.ecommerce.model.User;
 import com.shamim.ecommerce.model.VerificationCode;
 import com.shamim.ecommerce.repository.CartRepository;
+import com.shamim.ecommerce.repository.SellerRepository;
 import com.shamim.ecommerce.repository.UserRepository;
 import com.shamim.ecommerce.repository.VerificationCodeRepository;
 import com.shamim.ecommerce.service.AuthService;
 import com.shamim.ecommerce.service.EmailService;
 import com.shamim.ecommerce.util.OtpUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -34,15 +41,26 @@ public class AuthServiceImpl implements AuthService {
     private final JwtProvider jwtProvider;
     private final VerificationCodeRepository verificationCodeRepository;
     private final EmailService emailService;
+    private final CustomUserServiceImpl customUserService;
+    private final SellerRepository sellerRepository;
 
     @Override
-    public void sentLoginOtp(String email) throws Exception {
-        String SIGNING_PREFIX = "signin_";
+    public void sentLoginOtp(String email, UserRole role) throws Exception {
+        String SIGNING_PREFIX = "signing_";
+
         if (email.startsWith(SIGNING_PREFIX)) {
             email = email.substring(SIGNING_PREFIX.length());
-            User user = userRepository.findByEmail(email);
-            if (user == null) {
-                throw new Exception("User not exist with provided email");
+
+            if (role.equals(UserRole.ROLE_SELLER)) {
+                Seller seller = sellerRepository.findByEmail(email);
+                if (seller == null) {
+                    throw new Exception("Seller not exist with provided email");
+                }
+            } else {
+                User user = userRepository.findByEmail(email);
+                if (user == null) {
+                    throw new Exception("User not exist with provided email");
+                }
             }
         }
 
@@ -65,7 +83,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public String createUser(SignupRequest signupRequest) throws Exception {
         VerificationCode verificationCode = verificationCodeRepository.findByEmail(signupRequest.getEmail());
-        if (verificationCode == null || !verificationCode.equals(signupRequest.getOtp())) {
+        if (verificationCode == null || !verificationCode.getOtp().equals(signupRequest.getOtp())) {
             throw new Exception("Wrong otp....");
         }
 
@@ -75,7 +93,7 @@ public class AuthServiceImpl implements AuthService {
             createdUser .setEmail(signupRequest.getEmail());
             createdUser .setFullName(signupRequest.getFullName());
             createdUser .setRole(UserRole.ROLE_CUSTOMER);
-            createdUser.setEmail("213214124");
+            createdUser.setEmail(signupRequest.getEmail());
             createdUser.setPassword(passwordEncoder.encode(signupRequest.getOtp()));
             user = userRepository.save(createdUser);
 
@@ -91,5 +109,38 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         return jwtProvider.generateToken(authentication);
+    }
+
+    @Override
+    public AuthResponse signing(LoginRequest loginRequest) {
+        String username = loginRequest.getEmail();
+        String otp = loginRequest.getOtp();
+        Authentication authentication = authenticate(username, otp);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String token = jwtProvider.generateToken(authentication);
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setJwt(token);
+        authResponse.setMessage("Login Success");
+
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        String roleName = authorities.isEmpty() ? null : authorities.iterator().next().getAuthority();
+        authResponse.setRole(UserRole.valueOf(roleName));
+        return authResponse;
+    }
+
+    private Authentication authenticate(String username, String otp) {
+        UserDetails userDetails = customUserService.loadUserByUsername(username);
+
+        if (userDetails == null) {
+            throw new BadCredentialsException("Invalid username");
+        }
+
+        VerificationCode verificationCode = verificationCodeRepository.findByEmail(username);
+        if (verificationCode == null || !verificationCode.getOtp().equals(otp)) {
+            throw new BadCredentialsException("Invalid otp");
+        }
+
+        return new  UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 }

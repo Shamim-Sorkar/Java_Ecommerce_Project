@@ -28,7 +28,6 @@ public class AppConfig {
         ))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/**").authenticated()
-                        .requestMatchers("/api/products/*/reviews").permitAll()
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(new JwtTokenValidator(), BasicAuthenticationFilter.class)
