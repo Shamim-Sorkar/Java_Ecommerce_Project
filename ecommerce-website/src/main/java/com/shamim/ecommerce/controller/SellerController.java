@@ -43,7 +43,7 @@ public class SellerController {
         VerificationCode verificationCode = verificationCodeRepository.findByOtp(otp);
 
         if (verificationCode == null) {
-            throw new Exception("Wrong otp");
+            throw new Exception("Wrong otp ...");
         }
 
         Seller seller = sellerService.verifyEmail(verificationCode.getEmail(), otp);
