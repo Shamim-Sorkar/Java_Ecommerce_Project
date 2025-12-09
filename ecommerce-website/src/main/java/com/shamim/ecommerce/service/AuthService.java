@@ -9,5 +9,5 @@ public interface AuthService {
 
     void sentLoginOtp(String email, UserRole role) throws Exception;
     String createUser(SignupRequest signupRequest) throws Exception;
-    AuthResponse signing(LoginRequest loginRequest);
+    AuthResponse signing(LoginRequest loginRequest) throws Exception;
 }

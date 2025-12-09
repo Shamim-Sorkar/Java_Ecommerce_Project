@@ -17,6 +17,7 @@ import com.shamim.ecommerce.service.AuthService;
 import com.shamim.ecommerce.service.EmailService;
 import com.shamim.ecommerce.util.OtpUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -112,7 +113,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse signing(LoginRequest loginRequest) {
+    public AuthResponse signing(LoginRequest loginRequest) throws Exception {
         String username = loginRequest.getEmail();
         String otp = loginRequest.getOtp();
         Authentication authentication = authenticate(username, otp);
@@ -129,16 +130,21 @@ public class AuthServiceImpl implements AuthService {
         return authResponse;
     }
 
-    private Authentication authenticate(String username, String otp) {
+    private Authentication authenticate(String username, String otp) throws Exception {
         UserDetails userDetails = customUserService.loadUserByUsername(username);
 
+        String SELLER_PREFIX = "seller_";
+        if (username.startsWith(SELLER_PREFIX)) {
+            username = username.substring(SELLER_PREFIX.length());
+        }
+
         if (userDetails == null) {
-            throw new BadCredentialsException("Invalid username");
+            throw new Exception("Invalid username");
         }
 
         VerificationCode verificationCode = verificationCodeRepository.findByEmail(username);
         if (verificationCode == null || !verificationCode.getOtp().equals(otp)) {
-            throw new BadCredentialsException("Invalid otp");
+            throw new Exception("Invalid otp");
         }
 
         return new  UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

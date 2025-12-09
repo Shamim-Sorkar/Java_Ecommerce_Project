@@ -3,6 +3,7 @@ package com.shamim.ecommerce.service.impl;
 import com.shamim.ecommerce.config.JwtProvider;
 import com.shamim.ecommerce.constant.AccountStatus;
 import com.shamim.ecommerce.constant.UserRole;
+import com.shamim.ecommerce.exceptions.SellerException;
 import com.shamim.ecommerce.model.Address;
 import com.shamim.ecommerce.model.Seller;
 import com.shamim.ecommerce.repository.AddressRepository;
@@ -51,8 +52,8 @@ public class SellerServiceImpl implements SellerService {
     }
 
     @Override
-    public Seller getSellerById(Long id) throws Exception {
-        return sellerRepository.findById(id).orElseThrow(() -> new Exception("Seller is not found with id: " + id));
+    public Seller getSellerById(Long id) throws SellerException {
+        return sellerRepository.findById(id).orElseThrow(() -> new SellerException("Seller is not found with id: " + id));
     }
 
     @Override
@@ -90,9 +91,23 @@ public class SellerServiceImpl implements SellerService {
         }
 
         if (seller.getBankDetails() != null ) {
-            existingSeller.getBankDetails().setAccountHolderName(seller.getBankDetails().getAccountHolderName());
-            existingSeller.getBankDetails().setAccountNumber(seller.getBankDetails().getAccountNumber());
-            existingSeller.getBankDetails().setIfscCode(seller.getBankDetails().getIfscCode());
+            if (seller.getBankDetails().getAccountHolderName() != null) {
+                existingSeller.getBankDetails().setAccountHolderName(
+                        seller.getBankDetails().getAccountHolderName()
+                );
+            }
+
+            if (seller.getBankDetails().getAccountNumber() != null) {
+                existingSeller.getBankDetails().setAccountNumber(
+                        seller.getBankDetails().getAccountNumber()
+                );
+            }
+
+            if (seller.getBankDetails().getIfscCode() != null) {
+                existingSeller.getBankDetails().setIfscCode(
+                        seller.getBankDetails().getIfscCode()
+                );
+            }
         }
 
         if (seller.getPickupAddress() != null) {
