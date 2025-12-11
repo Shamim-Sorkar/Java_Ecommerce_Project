@@ -11,5 +11,5 @@ public class PaymentDetails {
     private String razorpayPaymentLinkReferenceId;
     private String razorpayPaymentLinkStatus;
     private String razorpayPaymentIdZWSP;
-    private PaymentStatus paymentStatus;
+    private PaymentStatus status;
 }
