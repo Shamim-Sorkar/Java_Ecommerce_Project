@@ -1,6 +1,7 @@
 package com.shamim.ecommerce.model;
 
 import com.shamim.ecommerce.constant.OrderStatus;
+import com.shamim.ecommerce.constant.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -47,8 +48,9 @@ public class Order {
 
     private int totalItem;
 
-    //private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     private LocalDateTime orderDate = LocalDateTime.now();
     private LocalDateTime deliverDate = orderDate.plusDays(7);
+
 }

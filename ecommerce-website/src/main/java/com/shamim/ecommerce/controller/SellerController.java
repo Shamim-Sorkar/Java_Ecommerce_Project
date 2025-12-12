@@ -1,13 +1,16 @@
 package com.shamim.ecommerce.controller;
 
+import com.shamim.ecommerce.config.JwtProvider;
 import com.shamim.ecommerce.constant.AccountStatus;
 import com.shamim.ecommerce.dto.request.LoginRequest;
 import com.shamim.ecommerce.dto.response.AuthResponse;
 import com.shamim.ecommerce.model.Seller;
+import com.shamim.ecommerce.model.SellerReport;
 import com.shamim.ecommerce.model.VerificationCode;
 import com.shamim.ecommerce.repository.VerificationCodeRepository;
 import com.shamim.ecommerce.service.AuthService;
 import com.shamim.ecommerce.service.EmailService;
+import com.shamim.ecommerce.service.SellerReportService;
 import com.shamim.ecommerce.service.SellerService;
 import com.shamim.ecommerce.util.OtpUtil;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,8 @@ public class SellerController {
     private final VerificationCodeRepository verificationCodeRepository;
     private final AuthService authService;
     private final EmailService emailService;
+    private final JwtProvider jwtProvider;
+    private final SellerReportService sellerReportService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> loginSeller(@RequestBody LoginRequest loginRequest) throws Exception {
@@ -77,6 +82,13 @@ public class SellerController {
     public ResponseEntity<Seller> getSellerByJwt(@RequestHeader("Authorization") String jwt) throws Exception {
         Seller seller = sellerService.getSellerProfile(jwt);
         return new ResponseEntity<>(seller, HttpStatus.OK);
+    }
+
+    @GetMapping("/report")
+    public ResponseEntity<SellerReport> getSellerReport(@RequestHeader("Authorization") String jwt) throws Exception {
+        Seller seller = sellerService.getSellerProfile(jwt);
+        SellerReport report = sellerReportService.getSellerReport(seller);
+        return ResponseEntity.ok(report);
     }
 
     @GetMapping
